@@ -1,28 +1,27 @@
 /**
- * Prefix command restrictions — dashboard and advanced setup flows stay slash-only.
+ * Prefix komut kısıtlamaları — Yönetim panelleri ve gelişmiş kurulumlar.
  */
 
-/** Top-level commands that cannot be invoked via prefix at all. */
+/** Ön ekle (!) kesinlikle çağrılamayacak ana komutlar. */
+// 'help' ve 'apply' komutlarını buradan çıkardık, artık !yardım ve !başvuru çalışabilir.
 export const SLASH_ONLY_COMMANDS = new Set([
   'configwizard',
-  'help',
   'embedbuilder',
   'wipedata',
-  'apply',
 ]);
 
-/** Subcommands blocked for every command when invoked via prefix. */
+/** Bütün komutlarda ön ekle (!) kullanılması engellenen alt komutlar. */
 export const GLOBAL_BLOCKED_SUBCOMMANDS = new Set([
   'dashboard',
   'setup',
 ]);
 
-/** Subcommand groups blocked for every command when invoked via prefix. */
+/** Bütün komutlarda ön ekle (!) kullanılması engellenen alt komut grupları. */
 export const GLOBAL_BLOCKED_SUBCOMMAND_GROUPS = new Set([
   'config',
 ]);
 
-/** Per-command subcommands that stay slash-only (beyond the global block list). */
+/** Özel olarak eğik çizgiye (/) zorunlu tutulan komut bazlı alt komutlar. */
 export const COMMAND_BLOCKED_SUBCOMMANDS = {
   music: new Set([
     'shuffle',
@@ -65,9 +64,9 @@ function isSubcommandBlocked(commandName, subcommandName) {
 }
 
 /**
- * Returns whether a prefix invocation should be rejected.
- * @param {object} command - Loaded command module
- * @param {string[]} args - Parsed prefix arguments (after command name)
+ * Ön ekli komutun reddedilip edilmeyeceğini kontrol eder.
+ * @param {object} command - Yüklenen komut modülü
+ * @param {string[]} args - İşlenen ön ek parametreleri
  * @param {(name: string) => string} resolveSubcommandAlias
  * @returns {{ blocked: boolean, reason?: string }}
  */
@@ -80,11 +79,11 @@ export function getPrefixRestriction(command, args, resolveSubcommandAlias) {
   const commandName = commandJson.name?.toLowerCase();
 
   if (command.prefixOnly === false || command.slashOnly === true) {
-    return { blocked: true, reason: 'This command is only available as a slash command.' };
+    return { blocked: true, reason: 'Bu komut sadece eğik çizgi (/) ile kullanılabilir.' };
   }
 
   if (SLASH_ONLY_COMMANDS.has(commandName)) {
-    return { blocked: true, reason: 'This command is only available as a slash command.' };
+    return { blocked: true, reason: 'Bu emri vermek için eğik çizgi (/) komutunu kullanmalısınız.' };
   }
 
   const [firstArg, secondArg] = args.map((arg) => arg?.toLowerCase?.() || null);
@@ -99,27 +98,27 @@ export function getPrefixRestriction(command, args, resolveSubcommandAlias) {
     allSubcommandNames.every((name) => isSubcommandBlocked(commandName, name));
 
   if (allSubcommandsBlocked) {
-    return { blocked: true, reason: 'This command is only available as a slash command.' };
+    return { blocked: true, reason: 'Bu emri vermek için eğik çizgi (/) komutunu kullanmalısınız.' };
   }
 
   if (firstArg && GLOBAL_BLOCKED_SUBCOMMAND_GROUPS.has(firstArg)) {
     return {
       blocked: true,
-      reason: 'This configuration flow is only available as a slash command.',
+      reason: 'Konfigürasyon işlemleri sadece eğik çizgi (/) ile yapılabilir.',
     };
   }
 
   if (resolvedFirstArg && isSubcommandBlocked(commandName, resolvedFirstArg)) {
     return {
       blocked: true,
-      reason: 'This subcommand is only available as a slash command.',
+      reason: 'Bu alt komut sadece eğik çizgi (/) ile kullanılabilir.',
     };
   }
 
   if (subcommandGroup && resolvedSecondArg && isSubcommandBlocked(commandName, resolvedSecondArg)) {
     return {
       blocked: true,
-      reason: 'This subcommand is only available as a slash command.',
+      reason: 'Bu alt komut sadece eğik çizgi (/) ile kullanılabilir.',
     };
   }
 
